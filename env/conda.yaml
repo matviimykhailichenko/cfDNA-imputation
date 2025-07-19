@@ -1,0 +1,9 @@
+name: cfdna_imputation
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python
+  - samtools
+  - pandas

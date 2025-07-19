@@ -1,15 +1,15 @@
 from pathlib import Path
 from subprocess import run as subp_run
+import pandas as pd
 
 
 data_dir = Path('/home/isilon/HumGenTempData/WGS/')
 coverages = {}
 
-
 bam_files = data_dir.rglob('*.bam')
 for file in bam_files:
     cmd = f"samtools depth -a {file}" + " | awk '{sum += $3} END {if (NR > 0) print sum / NR}'"
-    converage = subp_run(cmd, shell=True, check=True, capture_output=True, text=True).stdout
-    coverages[file] = converage
+    coverage = subp_run(cmd, shell=True, check=True, capture_output=True, text=True).stdout
+    coverages[file] = coverage
 
-print(len(coverages))
+df = pd.DataFrame(coverages)
