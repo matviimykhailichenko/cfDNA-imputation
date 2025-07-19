@@ -12,4 +12,5 @@ for file in bam_files:
     coverage = subp_run(cmd, shell=True, check=True, capture_output=True, text=True).stdout
     coverages[file] = coverage
 
-df = pd.DataFrame(coverages)
+df = pd.DataFrame(coverages.items(), columns=['Path', 'Coverage'])
+df.to_csv('coverages.csv')
