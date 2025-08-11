@@ -2,6 +2,8 @@ configfile: "config.yaml"
 
 include: "rules/align.smk"
 
+SAMPLES, = glob_wildcards("data/{sample}.fastq.gz")
+
 rule all:
     input:
-        expand("../tmp/{sample}.bam", sample=config["samples"])
+        expand("../tmp/{sample}.bam", sample=SAMPLES)
