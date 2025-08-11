@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#SBATCH --job-name=snakemake_sy096
+#SBATCH --job-name=galushka
 #SBATCH --nodelist=sy096
 #SBATCH --cpus-per-task=40
 #SBATCH --mem=64G
@@ -13,7 +13,7 @@ set -euo pipefail
 # Example:
 # module load python/3.10 snakemake/7.32.4
 # or activate your conda env:
-# source ~/miniconda3/etc/profile.d/conda.sh
+source ~/miniconda3/etc/profile.d/conda.sh
 conda activate galushka
 
 snakemake \
