@@ -5,7 +5,7 @@ include: "rules/call_variants.smk"
 
 
 
-df = pd.read_csv("doc/sample_manifest.csv")
+df = pd.read_csv("../doc/sample_manifest.csv")
 SAMPLES = df.set_index("sample_id")["bam_path"].to_dict()
 
 rule all:
