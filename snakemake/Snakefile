@@ -1,9 +1,13 @@
+import pandas as pd
+
 configfile: "config.yaml"
+include: "rules/call_variants.smk"
 
-include: "rules/align.smk"
 
-SAMPLES, = glob_wildcards("../data/{sample}.fastq.gz")
+
+df = pd.read_csv("doc/sample_manifest.csv")
+SAMPLES = df.set_index("sample_id")["bam_path"].to_dict()
 
 rule all:
     input:
-        expand("../tmp/{sample}.bam", sample=SAMPLES)
+        expand("../tmp/{sample}.vcf.gz", sample=SAMPLES.keys())
