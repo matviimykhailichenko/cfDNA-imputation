@@ -1,6 +1,8 @@
-cluster: "sbatch -J {rule}.{wildcards} -p {resources.partition} -t {resources.runtime} -c {threads} --mem={resources.mem_mb}M -o logs/%x-%j.out -e logs/%x-%j.err"
+executor: "cluster-generic"
+cluster-generic-submit-cmd: "sbatch -J {rule}.{wildcards} -t {resources.runtime} -c {threads} --mem={resources.mem_mb}M -o logs/%x-%j.out -e logs/%x-%j.err"
+
 jobs: 10
-rerun-incomplete: true
 latency-wait: 120
+rerun-incomplete: true
 use-conda: true
 printshellcmds: true
