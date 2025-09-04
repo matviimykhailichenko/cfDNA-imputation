@@ -12,8 +12,7 @@ for idx, row in df.iterrows():
     symlink_path = data_path/ f'{row['sample_id']}_30x.bam'
 
     cmd = f'ln -s {bam_path} {str(symlink_path)}'
-    print(cmd)
-    # subprocess.run(cmd,
-    #                check=True,
-    #                shell=True)
+    subprocess.run(cmd,
+                   check=True,
+                   shell=True)
 
