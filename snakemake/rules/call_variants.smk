@@ -7,14 +7,13 @@ rule call_variants:
         vcf = "../tmp/{sample}.vcf.gz",
         tbi="../tmp/{sample}.vcf.gz.tbi"
     threads: 12
-    resources:
-        mem_mb=24000,
-        runtime="06:00:00"
     params:
         min_baseq=20,
         min_mapq=20,
         min_cov=12,
         min_qual=30
+    conda:
+        '../../envs/lofreq.yaml'
     log:
         'logs/{sample}_variant_calling.log'
     shell:
