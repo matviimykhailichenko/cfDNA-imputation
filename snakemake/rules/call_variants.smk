@@ -1,11 +1,11 @@
 rule call_variants:
     input:
-        bam="../tmp/{sample}.bam",
-        bai="../tmp/{sample}.bam.bai",
+        bam="../tmp/{sample}_30x.bam",
+        bai="../tmp/{sample}_30x.bam.bai",
         ref=config["reference"]
     output:
-        vcf = "../tmp/{sample}.lofreq.vcf.gz",
-        tbi="../tmp/{sample}.lofreq.vcf.gz.tbi"
+        vcf = "../tmp/{sample}.vcf.gz",
+        tbi="../tmp/{sample}.vcf.gz.tbi"
     threads: 12
     resources:
         mem_mb=24000,
@@ -16,7 +16,7 @@ rule call_variants:
         min_cov=12,
         min_qual=30
     log:
-        '../logs/{sample}_variant_calling.log'
+        'logs/{sample}_variant_calling.log'
     shell:
         r"""
         set -euo pipefail
