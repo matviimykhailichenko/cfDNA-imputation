@@ -4,4 +4,4 @@ latency-wait: 120
 rerun-incomplete: true
 use-conda: true
 printshellcmds: true
-jobname: "{rule}.{wildcards}"
+jobname: "{rule}.{wildcards}.{jobid}"
