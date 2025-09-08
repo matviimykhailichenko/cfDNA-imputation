@@ -29,3 +29,5 @@ for idx, row in df.iterrows():
         subprocess.run(cmd,
                        check=True,
                        shell=True)
+
+        break
