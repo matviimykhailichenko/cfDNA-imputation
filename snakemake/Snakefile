@@ -17,4 +17,4 @@ COVERAGES = [30,25,20,15,10]
 
 rule all:
     input:
-        expand("../tmp/{sample}.vcf.gz", sample=SAMPLES.keys())
+        expand(f"{config['results_dir']}" + "/{sample}.vcf.gz", sample=SAMPLES.keys())
