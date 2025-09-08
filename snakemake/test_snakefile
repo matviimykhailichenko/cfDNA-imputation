@@ -1,0 +1,9 @@
+import sys
+from pathlib import Path
+
+repo_root = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(repo_root))
+
+print("REPO_ROOT=", repo_root)
+
+from scripts.custom.helpers import get_highest_cov_bam, get_highest_cov_bai

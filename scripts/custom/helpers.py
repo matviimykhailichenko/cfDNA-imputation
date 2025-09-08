@@ -8,5 +8,5 @@ def get_highest_cov_bam(wc, data_dir):
     best_cov = max(covs)
     return str(Path(data_dir) / f"{wc.sample}_{best_cov}.bam")
 
-def get_highest_cov_bai(wc, data_dir="../data"):
+def get_highest_cov_bai(wc, data_dir):
     return get_highest_cov_bam(wc, data_dir) + ".bai"
