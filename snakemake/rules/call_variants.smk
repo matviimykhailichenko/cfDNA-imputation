@@ -4,9 +4,9 @@ rule call_variants:
         bai="../data/{sample}_30x.bam.bai",
         ref=config["reference"]
     output:
-        intermediate_vcf =  f'{config["tmp_dir"]}/{sample}_tmp.vcf',
-        vcf = f'{config["results_dir"]}/{sample}.vcf.gz',
-        tbi= f'{config["results_dir"]}/{sample}.vcf.gz.tbi'
+        intermediate_vcf=f"{config['tmp_dir']}" + "/{sample}_tmp.vcf",
+        vcf=f"{config['results_dir']}" + "/{sample}.vcf.gz",
+        tbi=f"{config['results_dir']}" + "/{sample}.vcf.gz.tbi"
     threads: 12
     params:
         min_baseq=20,
