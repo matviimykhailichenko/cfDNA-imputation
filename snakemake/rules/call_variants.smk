@@ -1,7 +1,7 @@
 rule call_variants:
     input:
-        bam="../data/{sample}_30x.bam",
-        bai="../data/{sample}_30x.bam.bai",
+        bam="../data/{sample}_{coverage}.bam",
+        bai="../data/{sample}_{coverage}.bam.bai",
         ref=config["reference"]
     output:
         intermediate_vcf=f"{config['tmp_dir']}" + "/{sample}_tmp.vcf",
