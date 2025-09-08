@@ -34,7 +34,7 @@ rule call_variants:
           -q {params.min_baseq} \
           -Q {params.min_mapq} \
           -C {params.min_cov} \
-          -o "${tmpvcf}" \
+          -o "$tmpvcf" \
           {input.bam} 2> {log}
 
         # compress + index
