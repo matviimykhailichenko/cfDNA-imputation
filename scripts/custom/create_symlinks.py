@@ -20,6 +20,9 @@ for idx, row in df.iterrows():
         if not tentative_bam_path.exists():
             continue
 
+        if symlink_path.exists():
+            break
+
         cmd = f'ln -s {bam_path} {str(symlink_path)}'
         subprocess.run(cmd,
                        check=True,
@@ -34,6 +37,6 @@ for idx, row in df.iterrows():
         break
 
     if symlink_path.exists():
-        print(f'Created symlink for sample "{sample_id}"')
+        print(f'Created symlink for sample "{sample_id}" or it had already existed')
     else:
         print(f"Couldn't create a symlink for sample {sample_id}")
