@@ -6,13 +6,26 @@ import subprocess
 
 df = pd.read_csv("../../doc/sample_manifest.csv")
 data_path = Path('/home/gpfs/o_mykhaili/galushka/data')
+coverage_set = [30,25,20,15,10]
 
 for idx, row in df.iterrows():
     bam_path = row['bam_path']
-    symlink_path = data_path/ f'{row['sample_id']}_30x.bam'
+    sample_id = row['sample_id']
+    for coverage in coverage_set:
+        tentative_bam_path = Path(f'/home/isilon/HumGenTempData/LBFee/gcparagon/{sample_id}/BLACKLFIL1000TFBS1048TF_'
+                                  f'{sample_id}.sorted.markdup_cov_{coverage}.0/BLACKLFIL1000TFBS1048TF_{sample_id}.'
+                                  f'sorted.markdup_cov_{coverage}.0.GCtagged.bam')
+        symlink_path = data_path / f'{sample_id}_{coverage}x.bam'
 
-    cmd = f'ln -s {bam_path} {str(symlink_path)}'
-    subprocess.run(cmd,
-                   check=True,
-                   shell=True)
+        if not tentative_bam_path.exists():
+            continue
 
+        cmd = f'ln -s {bam_path} {str(symlink_path)}'
+        subprocess.run(cmd,
+                       check=True,
+                       shell=True)
+
+        cmd = f'ln -s {bam_path}.bai {str(symlink_path)}.bai'
+        subprocess.run(cmd,
+                       check=True,
+                       shell=True)
