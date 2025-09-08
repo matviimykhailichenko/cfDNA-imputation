@@ -1,7 +1,8 @@
 import sys
 from pathlib import Path
 
-repo_root = Path(__file__).parent
+snakefile_dir = Path(workflow.basedir).resolve()
+repo_root = snakefile_dir.parent          # repo root = parent of 'snakemake'
 sys.path.insert(0, str(repo_root))
 
 print("REPO_ROOT=", repo_root)

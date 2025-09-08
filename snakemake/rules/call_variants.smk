@@ -1,7 +1,10 @@
+from scripts.custom.helpers import get_highest_cov_bam, get_highest_cov_bai
+
+
 rule call_variants:
     input:
-        bam="../data/{sample}_{coverage}.bam",
-        bai="../data/{sample}_{coverage}.bam.bai",
+        bam=lambda wc: get_highest_cov_bam(wc,data_dir=config["data_dir"]),
+        bai=lambda wc: get_highest_cov_bai(wc,data_dir=config["data_dir"]),
         ref=config["reference"]
     output:
         intermediate_vcf=f"{config['tmp_dir']}" + "/{sample}_tmp.vcf",

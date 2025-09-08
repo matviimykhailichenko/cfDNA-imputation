@@ -2,7 +2,8 @@ import pandas as pd
 from pathlib import Path
 import sys
 
-repo_root = Path(__file__).resolve().parents[1]
+snakefile_dir = Path(workflow.basedir).resolve()
+repo_root = snakefile_dir.parent          # repo root = parent of 'snakemake'
 sys.path.insert(0, str(repo_root))
 
 configfile: "config.yaml"
