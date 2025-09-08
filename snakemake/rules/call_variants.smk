@@ -1,11 +1,12 @@
 rule call_variants:
     input:
-        bam="../tmp/{sample}_30x.bam",
-        bai="../tmp/{sample}_30x.bam.bai",
+        bam="../data/{sample}_30x.bam",
+        bai="../data/{sample}_30x.bam.bai",
         ref=config["reference"]
     output:
-        vcf = "../tmp/{sample}.vcf.gz",
-        tbi="../tmp/{sample}.vcf.gz.tbi"
+        intermediate_vcf =  f"{config['tmp_dir']}/{sample}_tmp.vcf",
+        vcf = f"{config["results_dir"]}/{sample}.vcf.gz",
+        tbi= f"{config["results_dir"]}/{sample}.vcf.gz.tbi"
     threads: 12
     params:
         min_baseq=20,
@@ -20,7 +21,7 @@ rule call_variants:
         r"""
         set -euo pipefail
 
-        tmpvcf=$(mktemp {output.vcf}.XXXXXX.vcf)
+        tmpvcf=$(mktemp --tmpdir $(basename {output.intermediate_vcf}).XXXXXX)
 
         lofreq call-parallel \
           --pp-threads {threads} \
