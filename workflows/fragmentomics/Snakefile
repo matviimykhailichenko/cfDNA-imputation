@@ -7,9 +7,8 @@ repo_root = snakefile_dir.parent          # repo root = parent of 'snakemake'
 sys.path.insert(0, str(repo_root))
 
 configfile: "config.yaml"
-include: "rules/call_variants.smk"
 
-df = pd.read_csv("../doc/sample_manifest.csv")
+df = pd.read_csv("../../doc/sample_manifest.csv")
 SAMPLES = df.set_index("sample_id")["bam_path"].to_dict()
 COVERAGES = [30,25,20,15,10]
 

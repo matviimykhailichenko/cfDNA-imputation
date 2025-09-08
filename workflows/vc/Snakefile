@@ -1,3 +1,22 @@
+import pandas as pd
+from pathlib import Path
+import sys
+
+snakefile_dir = Path(workflow.basedir).resolve()
+repo_root = snakefile_dir.parent         
+sys.path.insert(0, str(repo_root))
+
+configfile: "config.yaml"
+
+df = pd.read_csv("../../doc/sample_manifest.csv")
+SAMPLES = df.set_index("sample_id")["bam_path"].to_dict()
+COVERAGES = [30,25,20,15,10]
+
+rule all:
+    input:
+        expand(f"{config['results_dir']}" + "/{sample}.vcf.gz", sample=SAMPLES.keys())
+
+
 from scripts.custom.helpers import get_highest_cov_bam, get_highest_cov_bai
 
 
@@ -17,7 +36,7 @@ rule call_variants:
         min_cov=12,
         min_qual=30
     conda:
-        '../../envs/lofreq.yaml'
+        '../../shared/envs/lofreq.yaml'
     log:
         f'{config["results_dir"]}' + '/{sample}_variant_calling.log'
     shell:

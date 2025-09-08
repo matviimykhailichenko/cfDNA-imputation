@@ -5,8 +5,8 @@ import subprocess
 
 
 df = pd.read_csv("../../doc/sample_manifest.csv")
-data_path = Path('/home/gpfs/o_mykhaili/galushka/data')
-coverage_set = [30,25,20,15,10]
+data_path = Path('/home/gpfs/o_mykhaili/galushka/data/fragmentomics')
+coverage_set = [15]
 
 for idx, row in df.iterrows():
     bam_path = row['bam_path']
