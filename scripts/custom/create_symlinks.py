@@ -5,7 +5,7 @@ import subprocess
 
 
 df = pd.read_csv("../../doc/sample_manifest.csv")
-data_path = Path('/home/gpfs/o_mykhaili/galushka/data/fragmentomics')
+data_path = Path('/home/isilon/HumGenTempData/Matvii/data/fragmentomics')
 coverage_set = [15]
 
 for idx, row in df.iterrows():
