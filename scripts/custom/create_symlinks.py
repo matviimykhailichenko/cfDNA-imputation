@@ -30,4 +30,10 @@ for idx, row in df.iterrows():
                        check=True,
                        shell=True)
 
+
         break
+
+    if symlink_path.exists():
+        print(f'Created symlink for sample "{sample_id}"')
+    else:
+        print(f"Couldn't create a symlink for sample {sample_id}")
