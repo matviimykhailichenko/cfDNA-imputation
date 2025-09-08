@@ -1,1 +1,3 @@
 reference: '/home/gpfs/o_mykhaili/galushka/references/GCF_000001405.26_GRCh38_genomic.fna.gz'
+tmp_dir: '/home/isilon/HumGenTempData/Matvii/tmp'
+results_dir: '/home/isilon/HumGenTempData/Matvii/results'
