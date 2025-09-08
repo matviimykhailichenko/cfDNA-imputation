@@ -23,12 +23,12 @@ for idx, row in df.iterrows():
         if symlink_path.exists():
             break
 
-        cmd = f'ln -s {bam_path} {str(symlink_path)}'
+        cmd = f'ln -s {tentative_bam_path} {str(symlink_path)}'
         subprocess.run(cmd,
                        check=True,
                        shell=True)
 
-        cmd = f'ln -s {bam_path}.bai {str(symlink_path)}.bai'
+        cmd = f'ln -s {tentative_bam_path}.bai {str(symlink_path)}.bai'
         subprocess.run(cmd,
                        check=True,
                        shell=True)
