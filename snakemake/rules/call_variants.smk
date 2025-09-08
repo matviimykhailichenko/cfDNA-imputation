@@ -19,7 +19,7 @@ rule call_variants:
     conda:
         '../../envs/lofreq.yaml'
     log:
-        'config["results_dir"]/{sample}_variant_calling.log'
+        f'{config["results_dir"]}' + '/{sample}_variant_calling.log'
     shell:
         r"""
         set -euo pipefail
