@@ -1,11 +1,18 @@
 import pandas as pd
+from pathlib import Path
+import sys
+
+repo_root = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(repo_root))
 
 configfile: "config.yaml"
 include: "rules/call_variants.smk"
 
+from scripts.custom.io_helpers import get_highest_cov_bam, get_highest_cov_bai
 
 df = pd.read_csv("../doc/sample_manifest.csv")
 SAMPLES = df.set_index("sample_id")["bam_path"].to_dict()
+COVERAGES = [30,25,20,15,10]
 
 rule all:
     input:
