@@ -7,7 +7,7 @@ rule call_variants:
         bai=lambda wc: get_highest_cov_bai(wc,data_dir=config["data_dir"]),
         ref=config["reference"]
     output:
-        intermediate_vcf=f"{config['tmp_dir']}" + "/{sample}_tmp.vcf",
+        tmp_vcf=f"{config['tmp_dir']}" + "/{sample}_tmp.vcf",
         vcf=f"{config['results_dir']}" + "/{sample}.vcf.gz",
         tbi=f"{config['results_dir']}" + "/{sample}.vcf.gz.tbi"
     threads: 12
@@ -24,8 +24,6 @@ rule call_variants:
         r"""
         set -euo pipefail
 
-        tmpvcf=$(mktemp --tmpdir $(basename {output.intermediate_vcf}).XXXXXX)
-
         lofreq call-parallel \
           --pp-threads {threads} \
           -f {input.ref} \
@@ -34,10 +32,10 @@ rule call_variants:
           -q {params.min_baseq} \
           -Q {params.min_mapq} \
           -C {params.min_cov} \
-          -o "${{tmpvcf}}" \
+          -o {output.tmp_vcf} \
           {input.bam} 2> {log}
 
         # compress + index
-        bgzip -f -c "${{tmpvcf}}" > {output.vcf}
+        bgzip -f -c {output.tmp_vcf} > {output.vcf}
         tabix -f -p vcf {output.vcf} 2>> {log}
         """
