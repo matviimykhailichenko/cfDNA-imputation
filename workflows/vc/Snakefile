@@ -3,7 +3,7 @@ from pathlib import Path
 import sys
 
 snakefile_dir = Path(workflow.basedir).resolve()
-repo_root = snakefile_dir.parent         
+repo_root = snakefile_dir.parents[1]
 sys.path.insert(0, str(repo_root))
 
 configfile: "config.yaml"
