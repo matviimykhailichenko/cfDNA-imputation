@@ -8,7 +8,7 @@ sys.path.insert(0, str(repo_root))
 
 configfile: "config.yaml"
 
-df = pd.read_csv("../../doc/sample_manifest.csv")
+df = pd.read_csv(f"{repo_root}/doc/sample_manifest.csv")
 SAMPLES = df.set_index("sample_id")["bam_path"].to_dict()
 COVERAGES = [30,25,20,15,10]
 
@@ -26,9 +26,7 @@ rule call_variants:
         bai=lambda wc: get_highest_cov_bai(wc,data_dir=config["data_dir"]),
         ref=config["reference"]
     output:
-        tmp_vcf=f"{config['tmp_dir']}" + "/{sample}_tmp.vcf",
-        vcf=f"{config['results_dir']}" + "/{sample}.vcf.gz",
-        tbi=f"{config['results_dir']}" + "/{sample}.vcf.gz.tbi"
+        vcf=f"{config['tmp_dir']}" + "/{sample}_tmp.vcf"
     threads: 12
     params:
         min_baseq=20,
@@ -51,10 +49,26 @@ rule call_variants:
           -q {params.min_baseq} \
           -Q {params.min_mapq} \
           -C {params.min_cov} \
-          -o {output.tmp_vcf} \
+          -o {output.vcf} \
           {input.bam} 2> {log}
+        """
 
-        # compress + index
-        bgzip -f -c {output.tmp_vcf} > {output.vcf}
-        tabix -f -p vcf {output.vcf} 2>> {log}
+
+rule compress_index:
+    input:
+        vcf=f"{config['tmp_dir']}" + "/{sample}_tmp.vcf",
+    output:
+        comp_vcf=f"{config['results_dir']}" + "/{sample}.vcf.gz",
+        tbi=f"{config['results_dir']}" + "/{sample}.vcf.gz.tbi"
+    threads: 12
+    conda:
+        '../../shared/envs/lofreq.yaml'
+    log:
+        f'{config["results_dir"]}' + '/{sample}_compress_index.log'
+    shell:
+        r"""
+        set -euo pipefail
+    
+        bgzip -@ {threads} -f -c {input.vcf} > {output.comp_vcf}
+        tabix -@ {threads} -f -p vcf {output.comp_vcf} 2>> {log}
         """
