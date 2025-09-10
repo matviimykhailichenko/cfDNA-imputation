@@ -6,7 +6,6 @@ channels:
   - https://repo.anaconda.com/pkgs/r
   - bioconda
 dependencies:
-  - htslib
   - _libgcc_mutex=0.1=conda_forge
   - _openmp_mutex=4.5=2_gnu
   - ca-certificates=2025.8.3=hbd8a1cb_0
