@@ -34,7 +34,7 @@ rule call_variants:
         min_cov=12,
         min_qual=30
     conda:
-        '../../shared/envs/lofreq.yaml'
+        f'{repo_root}/shared/envs/lofreq.yaml'
     log:
         f'{config["results_dir"]}' + '/{sample}_variant_calling.log'
     shell:
@@ -62,7 +62,7 @@ rule compress_index:
         tbi=f"{config['results_dir']}" + "/{sample}.vcf.gz.tbi"
     threads: 20
     conda:
-        '../../shared/envs/galushka.yaml'
+        f'{repo_root}/shared/envs/htstools.yaml'
     log:
         f'{config["results_dir"]}' + '/{sample}_compress_index.log'
     shell:
