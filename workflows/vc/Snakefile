@@ -22,12 +22,12 @@ from scripts.custom.helpers import get_highest_cov_bam, get_highest_cov_bai
 
 rule call_variants:
     input:
-        bam=lambda wc: get_highest_cov_bam(wc,data_dir=config["data_dir"]),
-        bai=lambda wc: get_highest_cov_bai(wc,data_dir=config["data_dir"]),
+        bam=lambda wc: get_highest_cov_bam(wc,data_dir=config["vc_data_dir"]),
+        bai=lambda wc: get_highest_cov_bai(wc,data_dir=config["vc_data_dir"]),
         ref=config["reference"]
     output:
         vcf=f"{config['tmp_dir']}" + "/{sample}_tmp.vcf"
-    threads: 12
+    threads: 20
     params:
         min_baseq=20,
         min_mapq=20,
@@ -60,9 +60,9 @@ rule compress_index:
     output:
         comp_vcf=f"{config['results_dir']}" + "/{sample}.vcf.gz",
         tbi=f"{config['results_dir']}" + "/{sample}.vcf.gz.tbi"
-    threads: 12
+    threads: 20
     conda:
-        '../../shared/envs/lofreq.yaml'
+        '../../shared/envs/galushka.yaml'
     log:
         f'{config["results_dir"]}' + '/{sample}_compress_index.log'
     shell:
