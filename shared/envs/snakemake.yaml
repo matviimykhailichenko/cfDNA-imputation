@@ -1,4 +1,4 @@
-name: snakemake_slurm
+name: snakemake
 channels:
   - conda-forge
   - bioconda
