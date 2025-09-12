@@ -12,7 +12,7 @@ df = pd.read_csv(f"{repo_root}/doc/sample_manifest.csv")
 COVERAGES = [30,25,20,15,10]
 testing = config['testing']
 SAMPLES = df.set_index("sample_id")["bam_path"].to_dict() if not testing else {'test_sample':'/home/isilon/HumGenTempData/Matvii/testing/data/test_sample_30x.bam'}
-data_dir = config["vc_data_dir"] if not testing else '/home/isilon/HumGenTempData/Matvii/testing/data/vc'
+data_dir = config["vc_data_dir"] if not testing else '/home/isilon/HumGenTempData/Matvii/testing/data'
 tmp_dir = config["tmp_dir"] if not testing else '/home/isilon/HumGenTempData/Matvii/testing/tmp'
 results_dir = config["results_dir"] if not testing else '/home/isilon/HumGenTempData/Matvii/testing/results'
 
