@@ -8,10 +8,27 @@ sys.path.insert(0, str(repo_root))
 
 configfile: "config.yaml"
 
-df = pd.read_csv("../../doc/sample_manifest.csv")
+df = pd.read_csv(f"{repo_root}/doc/sample_manifest.csv")
 SAMPLES = df.set_index("sample_id")["bam_path"].to_dict()
-COVERAGES = [30,25,20,15,10]
+blacklist = f'{repo_root}/blacklist/blacklist_final.bed.gz'
 
 rule all:
     input:
         expand(f"{config['results_dir']}" + "/{sample}.vcf.gz", sample=SAMPLES.keys())
+
+rule filter:
+    input:
+        bam=f"{config['tmp_dir']}" + "/{sample}_15x.bam",
+    output:
+        filtered_bam=f"{config['tmp_dir']}" + "/{sample}_15x.bam"
+    threads: 20
+    conda:
+        f'{repo_root}/shared/envs/htstools.yaml'
+    log:
+        f'{config["results_dir"]}' + '/{sample}_compress_index.log'
+    shell:
+        r"""
+        set -euo pipefail
+
+        samtools view -b -L {blacklist} {input.bam} > {output.filtered_bam}
+        """

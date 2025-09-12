@@ -11,10 +11,15 @@ configfile: "config.yaml"
 df = pd.read_csv(f"{repo_root}/doc/sample_manifest.csv")
 SAMPLES = df.set_index("sample_id")["bam_path"].to_dict()
 COVERAGES = [30,25,20,15,10]
+testing = config['testing']
+data_dir = config["vc_data_dir"] if not testing else '/home/isilon/HumGenTempData/Matvii/testing/data/vc'
+tmp_dir = config["tmp_dir"] if not testing else '/home/isilon/HumGenTempData/Matvii/testing/tmp'
+results_dir = config["results_dir"] if not testing else '/home/isilon/HumGenTempData/Matvii/testing/results'
+
 
 rule all:
     input:
-        expand(f"{config['results_dir']}" + "/{sample}.vcf.gz", sample=SAMPLES.keys())
+        expand(results_dir + "/{sample}.vcf.gz", sample=SAMPLES.keys())
 
 
 from scripts.custom.helpers import get_highest_cov_bam, get_highest_cov_bai
@@ -22,11 +27,11 @@ from scripts.custom.helpers import get_highest_cov_bam, get_highest_cov_bai
 
 rule call_variants:
     input:
-        bam=lambda wc: get_highest_cov_bam(wc,data_dir=config["vc_data_dir"]),
-        bai=lambda wc: get_highest_cov_bai(wc,data_dir=config["vc_data_dir"]),
+        bam=lambda wc: get_highest_cov_bam(wc,data_dir=data_dir),
+        bai=lambda wc: get_highest_cov_bai(wc,data_dir=data_dir),
         ref=config["reference"]
     output:
-        vcf=f"{config['tmp_dir']}" + "/{sample}_tmp.vcf"
+        vcf=tmp_dir + "/{sample}_tmp.vcf"
     threads: 20
     params:
         min_baseq=20,
@@ -36,7 +41,7 @@ rule call_variants:
     conda:
         f'{repo_root}/shared/envs/lofreq.yaml'
     log:
-        f'{config["results_dir"]}' + '/{sample}_variant_calling.log'
+        results_dir + '/{sample}_variant_calling.log'
     shell:
         r"""
         set -euo pipefail
@@ -56,15 +61,15 @@ rule call_variants:
 
 rule compress_index:
     input:
-        vcf=f"{config['tmp_dir']}" + "/{sample}_tmp.vcf",
+        vcf=tmp_dir + "/{sample}_tmp.vcf",
     output:
-        comp_vcf=f"{config['results_dir']}" + "/{sample}.vcf.gz",
-        tbi=f"{config['results_dir']}" + "/{sample}.vcf.gz.tbi"
+        comp_vcf=results_dir + "/{sample}.vcf.gz",
+        tbi=results_dir + "/{sample}.vcf.gz.tbi"
     threads: 20
     conda:
         f'{repo_root}/shared/envs/htstools.yaml'
     log:
-        f'{config["results_dir"]}' + '/{sample}_compress_index.log'
+        results_dir + '/{sample}_compress_index.log'
     shell:
         r"""
         set -euo pipefail
