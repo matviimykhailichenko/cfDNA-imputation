@@ -1,7 +1,6 @@
 import pandas as pd
 from pathlib import Path
 import sys
-from scripts.logging_ops import notify_bot
 
 snakefile_dir = Path(workflow.basedir).resolve()
 repo_root = snakefile_dir.parents[1]
@@ -17,6 +16,14 @@ data_dir = config["vc_data_dir"] if not testing else '/home/isilon/HumGenTempDat
 tmp_dir = config["tmp_dir"] if not testing else '/home/isilon/HumGenTempData/Matvii/testing/tmp'
 results_dir = config["results_dir"] if not testing else '/home/isilon/HumGenTempData/Matvii/testing/results'
 
+rule all:
+    input:
+        expand(results_dir + "/{sample}.vcf.gz", sample=SAMPLES.keys())
+
+
+from scripts.custom.helpers import get_highest_cov_bam, get_highest_cov_bai
+from scripts.logging_ops import notify_bot
+
 onstart:
     notify_bot("Snakemake had started.")
 
@@ -25,14 +32,6 @@ onsuccess:
 
 onerror:
     notify_bot(f"Snakemake had failed.")
-
-rule all:
-    input:
-        expand(results_dir + "/{sample}.vcf.gz", sample=SAMPLES.keys())
-
-
-from scripts.custom.helpers import get_highest_cov_bam, get_highest_cov_bai
-
 
 rule call_variants:
     input:
