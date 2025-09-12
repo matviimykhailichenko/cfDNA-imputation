@@ -1,6 +1,6 @@
-cluster: "sbatch --reservation=HumanGenetik"
 executor: slurm
 jobs: 10
+reservation: HumanGenetik
 latency-wait: 120
 rerun-incomplete: true
 use-conda: true
