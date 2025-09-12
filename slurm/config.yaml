@@ -1,6 +1,7 @@
 executor: slurm
 jobs: 10
 default-resources:
+  - slurm_account='users'
   - slurm_reservation='HumanGenetik'
 latency-wait: 120
 rerun-incomplete: true
