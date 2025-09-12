@@ -1,6 +1,6 @@
 executor: slurm
 jobs: 10
-resources:
+default-resources:
     account=o_mykhaili,
     reservation=HumanGenetik
 latency-wait: 120
