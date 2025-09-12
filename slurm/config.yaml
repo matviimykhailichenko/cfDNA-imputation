@@ -1,5 +1,6 @@
 executor: slurm
 jobs: 10
+slurm_account: o_mykhaili
 slurm-reservation: HumanGenetik
 latency-wait: 120
 rerun-incomplete: true
