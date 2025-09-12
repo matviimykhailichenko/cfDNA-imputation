@@ -1,8 +1,8 @@
 executor: slurm
 jobs: 10
 resources:
-    account="o_mykhaili",
-    reservation="HumanGenetik"
+    account=o_mykhaili,
+    reservation=HumanGenetik
 latency-wait: 120
 rerun-incomplete: true
 use-conda: true
