@@ -1,6 +1,7 @@
 import pandas as pd
 from pathlib import Path
 import sys
+from scripts.logging_ops import notify_bot
 
 snakefile_dir = Path(workflow.basedir).resolve()
 repo_root = snakefile_dir.parents[1]
@@ -16,6 +17,14 @@ data_dir = config["vc_data_dir"] if not testing else '/home/isilon/HumGenTempDat
 tmp_dir = config["tmp_dir"] if not testing else '/home/isilon/HumGenTempData/Matvii/testing/tmp'
 results_dir = config["results_dir"] if not testing else '/home/isilon/HumGenTempData/Matvii/testing/results'
 
+onstart:
+    notify_bot("Snakemake had started.")
+
+onsuccess:
+    notify_bot("Snakemake had finished successfully.")
+
+onerror:
+    notify_bot(f"Snakemake had failed.")
 
 rule all:
     input:
