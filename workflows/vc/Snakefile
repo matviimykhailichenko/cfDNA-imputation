@@ -11,10 +11,11 @@ configfile: "config.yaml"
 df = pd.read_csv(f"{repo_root}/doc/sample_manifest.csv")
 COVERAGES = [30,25,20,15,10]
 testing = config['testing']
-SAMPLES = df.set_index("sample_id")["bam_path"].to_dict() if not testing else {'test_sample':'/home/isilon/HumGenTempData/Matvii/testing/data/test_sample_30x.bam'}
-data_dir = config["vc_data_dir"] if not testing else '/home/isilon/HumGenTempData/Matvii/testing/data'
-tmp_dir = config["tmp_dir"] if not testing else '/home/isilon/HumGenTempData/Matvii/testing/tmp'
-results_dir = config["results_dir"] if not testing else '/home/isilon/HumGenTempData/Matvii/testing/results'
+SAMPLES = df.set_index("sample_id")["bam_path"].to_dict() if not testing else {'test_sample':'/media/matvii/30c92328-1f20-448d-a014-902558a05393/galushka/sandbox/data/test_sample_30x.bam'}
+data_dir = config["vc_data_dir"] if not testing else '/media/matvii/30c92328-1f20-448d-a014-902558a05393/galushka/sandbox/data'
+tmp_dir = config["tmp_dir"] if not testing else '/media/matvii/30c92328-1f20-448d-a014-902558a05393/galushka/sandbox/tmp'
+results_dir = config["results_dir"] if not testing else '/media/matvii/30c92328-1f20-448d-a014-902558a05393/galushka/sandbox/results'
+reference = config['reference'] if not testing else config['reference_local']
 
 rule all:
     input:
@@ -31,13 +32,13 @@ onsuccess:
     notify_bot("Snakemake had finished successfully.")
 
 onerror:
-    notify_bot(f"Snakemake had failed.")
+    notify_bot("Snakemake had failed.")
 
 rule call_variants:
     input:
         bam=lambda wc: get_highest_cov_bam(wc,data_dir=data_dir),
         bai=lambda wc: get_highest_cov_bai(wc,data_dir=data_dir),
-        ref=config["reference"]
+        ref=reference
     output:
         vcf=tmp_dir + "/{sample}_tmp.vcf"
     threads: 20

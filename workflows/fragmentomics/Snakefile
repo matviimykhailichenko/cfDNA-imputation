@@ -3,7 +3,7 @@ from pathlib import Path
 import sys
 
 snakefile_dir = Path(workflow.basedir).resolve()
-repo_root = snakefile_dir.parent          # repo root = parent of 'snakemake'
+repo_root = snakefile_dir.parent
 sys.path.insert(0, str(repo_root))
 
 configfile: "config.yaml"
@@ -11,21 +11,37 @@ configfile: "config.yaml"
 df = pd.read_csv(f"{repo_root}/doc/sample_manifest.csv")
 SAMPLES = df.set_index("sample_id")["bam_path"].to_dict()
 blacklist = f'{repo_root}/blacklist/blacklist_final.bed.gz'
+testing = config['testing']
+SAMPLES = df.set_index("sample_id")["bam_path"].to_dict() if not testing else {'test_sample':'/media/matvii/30c92328-1f20-448d-a014-902558a05393/galushka/sandbox/data/test_sample_30x.bam'}
+data_dir = config["vc_data_dir"] if not testing else '/media/matvii/30c92328-1f20-448d-a014-902558a05393/galushka/sandbox/data'
+tmp_dir = config["tmp_dir"] if not testing else '/media/matvii/30c92328-1f20-448d-a014-902558a05393/galushka/sandbox/tmp'
+results_dir = config["results_dir"] if not testing else '/media/matvii/30c92328-1f20-448d-a014-902558a05393/galushka/sandbox/data/results'
+
+from scripts.logging_ops import notify_bot
+
+onstart:
+    notify_bot("The fragmentomics pipeline had started.")
+
+onsuccess:
+    notify_bot("The fragmentomics pipeline had finished successfully.")
+
+onerror:
+    notify_bot("The fragmentomics pipeline had failed.")
 
 rule all:
     input:
-        expand(f"{config['results_dir']}" + "/{sample}.vcf.gz", sample=SAMPLES.keys())
+        expand(results_dir + "/{sample}.vcf.gz", sample=SAMPLES.keys())
 
 rule filter:
     input:
-        bam=f"{config['tmp_dir']}" + "/{sample}_15x.bam",
+        bam=tmp_dir + "/{sample}_15x.bam",
     output:
-        filtered_bam=f"{config['tmp_dir']}" + "/{sample}_15x.bam"
+        filtered_bam=tmp_dir + "/{sample}_15x.bam"
     threads: 20
     conda:
         f'{repo_root}/shared/envs/htstools.yaml'
     log:
-        f'{config["results_dir"]}' + '/{sample}_compress_index.log'
+        results_dir + '/{sample}_filter.log'
     shell:
         r"""
         set -euo pipefail

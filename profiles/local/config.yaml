@@ -1,0 +1,3 @@
+use-conda: true
+printshellcmds: true
+cores: 20
