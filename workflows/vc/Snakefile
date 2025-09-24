@@ -11,10 +11,13 @@ configfile: "config.yaml"
 df = pd.read_csv(f"{repo_root}/doc/sample_manifest.csv")
 COVERAGES = [30,25,20,15,10]
 testing = config['testing']
-SAMPLES = df.set_index("sample_id")["bam_path"].to_dict() if not testing else {'test_sample':'/media/matvii/30c92328-1f20-448d-a014-902558a05393/galushka/sandbox/data/test_sample_30x.bam'}
+base_dir = config['cluster_base_dir'] if not testing else config['local_base_dir']
+SAMPLES = df.set_index("sample_id")["bam_path"].to_dict() if not testing else {'D1_1':'/media/matvii/30c92328-1f20-448d-a014-902558a05393/galushka/sandbox/data/D1_1_30x.bam'}
 data_dir = config["vc_data_dir"] if not testing else '/media/matvii/30c92328-1f20-448d-a014-902558a05393/galushka/sandbox/data'
-tmp_dir = config["tmp_dir"] if not testing else '/media/matvii/30c92328-1f20-448d-a014-902558a05393/galushka/sandbox/tmp'
+tmp_dir = config["tmp_dir"] if not testing else '/media/matvii/30c92328-1f20-448d-a014-902558a05393/galushka/sandbox/tmp/'
 results_dir = config["results_dir"] if not testing else '/media/matvii/30c92328-1f20-448d-a014-902558a05393/galushka/sandbox/results'
+known_snps = base_dir + 'resources/known_snps.vcf.gz'
+known_indels = base_dir + 'resources/known_indels.vcf.gz'
 reference = config['reference'] if not testing else config['reference_local']
 
 rule all:
@@ -34,14 +37,114 @@ onsuccess:
 onerror:
     notify_bot("Snakemake had failed.")
 
+
+rule add_read_group:
+    input:
+        bam=lambda wc: get_highest_cov_bam(wc,data_dir=data_dir)
+    output:
+        bam=tmp_dir + '{sample}_RG.bam',
+        bai=tmp_dir + '{sample}_RG.bam.bai'
+    threads: 1
+    conda: f'{repo_root}/shared/envs/gatk.yaml'
+    log: tmp_dir + '{sample}_create_recal_table.log'
+    shell:
+        """
+        set -euo pipefail
+        
+        gatk AddOrReplaceReadGroups \
+          -I {input.bam} \
+          -O {output.bam} \
+          -RGID D1_1 \
+          -RGLB lib1 \
+          -RGPL ILLUMINA \
+          -RGPU unit1 \
+          -RGSM D1_1
+        
+        samtools index {output.bam}
+        """
+
+
+rule create_recal_table:
+    input:
+        bam=rules.add_read_group.output.bam,
+        bai=rules.add_read_group.output.bai,
+        ref=reference,
+        known_snps=known_snps,
+        known_indels=known_indels
+    output:
+        recal_table=tmp_dir + '{sample}_recal_table.csv'
+    threads: 1
+    conda:
+        f'{repo_root}/shared/envs/gatk.yaml'
+    log: tmp_dir + '{sample}_create_recal_table.log'
+    shell:
+        """
+        set -euo pipefail
+
+        gatk BaseRecalibrator \
+          -I {input.bam} \
+          -R {input.ref} \
+          --known-sites {input.known_snps} \
+          --known-sites {input.known_indels} \
+          -O {output.recal_table}
+        """
+
+rule apply_bqsr_index:
+    input:
+        bam=rules.create_recal_table.input.bam,
+        bai=rules.create_recal_table.input.bai,
+        ref=reference,
+        recal_table=rules.create_recal_table.output.recal_table
+    output:
+        bam=tmp_dir + '{sample}_bqsr.bam',
+        bai=tmp_dir + '{sample}_bqsr.bam.bai'
+    threads: 20
+    resources:
+        heavy=1
+    conda:
+        f'{repo_root}/shared/envs/gatk.yaml'
+    log: tmp_dir + '{sample}_apply_bqsr_index.log'
+    shell:
+        """
+        set -euo pipefail
+
+        gatk ApplyBQSR \
+            -I {input.bam} \
+            -R {input.ref} \
+            --bqsr-recal-file {input.recal_table} \
+            -O {output.bam}
+            
+        samtools index -@ {threads} -b {output.bam} {output.bai} 2>> {log}
+        """
+
+rule indel_qual_index:
+    input:
+        bam = rules.apply_bqsr_index.output.bam,
+        bai = rules.apply_bqsr_index.output.bai
+    output:
+        bam = tmp_dir + '{sample}_bqsr_indelqual.bam',
+        bai = tmp_dir + '{sample}_bqsr_indelqual.bam.bai'
+    threads: 20
+    resources:
+        heavy=1
+    conda: f'{repo_root}/shared/envs/lofreq.yaml'
+    shell: r"""
+        set -euo pipefail
+        lofreq indelqual --dindel -f {reference} -o {output.bam} {input.bam}
+        samtools index -@ {threads} -b {output.bam} {output.bai}
+    """
+
+
 rule call_variants:
     input:
-        bam=lambda wc: get_highest_cov_bam(wc,data_dir=data_dir),
-        bai=lambda wc: get_highest_cov_bai(wc,data_dir=data_dir),
+        bam=rules.indel_qual_index.output.bam,
+        bai=rules.indel_qual_index.output.bai,
         ref=reference
     output:
         vcf=tmp_dir + "/{sample}_tmp.vcf"
     threads: 20
+    resources:
+        heavy=1
     params:
         min_baseq=20,
         min_mapq=20,
@@ -70,11 +173,13 @@ rule call_variants:
 
 rule compress_index:
     input:
-        vcf=tmp_dir + "/{sample}_tmp.vcf",
+        vcf=rules.call_variants.output.vcf
     output:
         comp_vcf=results_dir + "/{sample}.vcf.gz",
         tbi=results_dir + "/{sample}.vcf.gz.tbi"
     threads: 20
+    resources:
+        heavy=1
     conda:
         f'{repo_root}/shared/envs/htstools.yaml'
     log:

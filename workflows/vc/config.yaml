@@ -1,6 +1,9 @@
 reference: '/home/isilon/HumGenTempData/REF_GENOMES/hg38/fasta/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna'
 reference_local: '/mnt/data/reference_genome/NCBI_GCA_1405.15_GRCH38_no_alts_with_decoys/GCA_000001405.15_GRCh38_no_alt_plus_hs38d1_analysis_set.fna'
-vc_data_dir: '/home/isilon/HumGenTempData/Matvii/data/vc'
-tmp_dir: '/home/isilon/HumGenTempData/Matvii/tmp'
-results_dir: '/home/isilon/HumGenTempData/Matvii/results'
-testing: False
+vc_data_dir: '/home/isilon/HumGenTempData/Matvii/data/vc/'
+tmp_dir: '/home/isilon/HumGenTempData/Matvii/tmp/'
+results_dir: '/home/isilon/HumGenTempData/Matvii/results/'
+cluster_base_dir: '/home/isilon/HumGenTempData/Matvii/'
+local_base_dir: '/media/matvii/30c92328-1f20-448d-a014-902558a05393/galushka/sandbox/'
+known_snps: '/resources'
+testing: True

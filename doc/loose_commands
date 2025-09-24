@@ -1,0 +1,2 @@
+1. Annotate SNPs from RefSeq to UCSC:
+'bcftools annotate --rename-chrs refseq_to_chr.map -Oz -o known_snps.vcf.gz known_snps_refseq.vcf.gz'
