@@ -4,7 +4,7 @@ default-resources:
   - slurm_account='users'
   - slurm_reservation='HumanGenetik'
 resources:
-  - heavy: 10
+  - heavy=10
 latency-wait: 120
 rerun-incomplete: true
 use-conda: true
