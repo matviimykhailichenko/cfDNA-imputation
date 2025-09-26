@@ -42,11 +42,11 @@ rule add_read_group:
     input:
         bam=lambda wc: get_highest_cov_bam(wc,data_dir=data_dir)
     output:
-        bam=str(tmp_dir) + '{sample}_RG.bam',
-        bai=str(tmp_dir) + '{sample}_RG.bam.bai'
+        bam=str(tmp_dir) + '/{sample}_RG.bam',
+        bai=str(tmp_dir) + '/{sample}_RG.bam.bai'
     threads: 1
     conda: f'{repo_root}/shared/envs/gatk.yaml'
-    log: str(tmp_dir) + '{sample}_create_recal_table.log'
+    log: str(tmp_dir) + '/{sample}_create_recal_table.log'
     shell:
         """
         set -euo pipefail
@@ -72,11 +72,11 @@ rule create_recal_table:
         known_snps=known_snps,
         known_indels=known_indels
     output:
-        recal_table=str(tmp_dir) + '{sample}_recal_table.csv'
+        recal_table=str(tmp_dir) + '/{sample}_recal_table.csv'
     threads: 1
     conda:
         f'{repo_root}/shared/envs/gatk.yaml'
-    log: str(tmp_dir) + '{sample}_create_recal_table.log'
+    log: str(tmp_dir) + '/{sample}_create_recal_table.log'
     shell:
         """
         set -euo pipefail
@@ -96,14 +96,14 @@ rule apply_bqsr_index:
         ref=reference,
         recal_table=rules.create_recal_table.output.recal_table
     output:
-        bam=str(tmp_dir) + '{sample}_bqsr.bam',
-        bai=str(tmp_dir) + '{sample}_bqsr.bam.bai'
+        bam=str(tmp_dir) + '/{sample}_bqsr.bam',
+        bai=str(tmp_dir) + '/{sample}_bqsr.bam.bai'
     threads: 20
     resources:
         heavy=1
     conda:
         f'{repo_root}/shared/envs/gatk.yaml'
-    log: str(tmp_dir) + '{sample}_apply_bqsr_index.log'
+    log: str(tmp_dir) + '/{sample}_apply_bqsr_index.log'
     shell:
         """
         set -euo pipefail
@@ -122,8 +122,8 @@ rule indel_qual_index:
         bam = rules.apply_bqsr_index.output.bam,
         bai = rules.apply_bqsr_index.output.bai
     output:
-        bam = str(tmp_dir) + '{sample}_bqsr_indelqual.bam',
-        bai = str(tmp_dir) + '{sample}_bqsr_indelqual.bam.bai'
+        bam = str(tmp_dir) + '/{sample}_bqsr_indelqual.bam',
+        bai = str(tmp_dir) + '/{sample}_bqsr_indelqual.bam.bai'
     threads: 20
     resources:
         heavy=1
