@@ -117,13 +117,12 @@ rule apply_bqsr_index:
         samtools index -@ {threads} -b {output.bam} {output.bai} 2>> {log}
         """
 
-rule indel_qual_index:
+rule indel_qual:
     input:
-        bam = rules.apply_bqsr_index.output.bam,
+        bam=rules.apply_bqsr_index.output.bam,
         bai = rules.apply_bqsr_index.output.bai
     output:
         bam = str(tmp_dir) + '/{sample}_bqsr_indelqual.bam',
-        bai = str(tmp_dir) + '/{sample}_bqsr_indelqual.bam.bai'
     threads: 20
     resources:
         heavy=1
@@ -131,14 +130,27 @@ rule indel_qual_index:
     shell: r"""
         set -euo pipefail
         lofreq indelqual --dindel -f {reference} -o {output.bam} {input.bam}
-        samtools index -@ {threads} -b {output.bam} {output.bai}
+    """
+
+
+rule index_indel_qual:
+    input:
+        bam=rules.indel_qual.output.bam,
+    output:
+        bai = str(tmp_dir) + '/{sample}_bqsr_indelqual.bam.bai'
+    threads: 20
+    resources:
+        heavy=1
+    conda: f'{repo_root}/shared/envs/lofreq.yaml'
+    shell: r"""
+        samtools index -@ {threads} -b {input.bam} {output.bai}
     """
 
 
 rule call_variants:
     input:
-        bam=rules.indel_qual_index.output.bam,
-        bai=rules.indel_qual_index.output.bai,
+        bam=rules.indel_qual.output.bam,
+        bai=rules.index_indel_qual.output.bai,
         ref=reference
     output:
         vcf=str(tmp_dir) + "/{sample}_tmp.vcf"
