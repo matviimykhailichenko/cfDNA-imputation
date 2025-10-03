@@ -19,18 +19,13 @@ results_dir = Path(config["results_dir"] if not testing else '/media/matvii/30c9
 known_snps = base_dir / 'resources/known_snps.vcf.gz'
 known_indels = base_dir / 'resources/known_indels.vcf.gz'
 reference = Path(config['reference'] if not testing else config['reference_local'])
-bam_prefixes = ["RG", "bqsr", "bqsr_indelqual"]
-
 
 rule all:
     input:
-        expand(f"{results_dir}/{{sample}}/{{sample}}.vcf.gz", sample=SAMPLES.keys()),
-        expand(f"{results_dir}/{{sample}}/{{sample}}.vcf.gz.tbi", sample=SAMPLES.keys()),
-        expand(f"{results_dir}/{{sample}}/{{sample}}_{{prefix}}.cram", sample=SAMPLES.keys(), prefix=bam_prefixes),
-        expand(f"{results_dir}/{{sample}}/{{sample}}_{{prefix}}.cram.crai", sample=SAMPLES.keys(), prefix=bam_prefixes)
+        expand(str(results_dir) + "/{sample}.vcf.gz", sample=SAMPLES.keys())
 
 
-from scripts.custom.helpers import get_highest_cov_bam
+from scripts.custom.helpers import get_highest_cov_bam, get_highest_cov_bai
 from scripts.logging_ops import notify_bot
 
 onstart:
@@ -42,48 +37,46 @@ onsuccess:
 onerror:
     notify_bot("Snakemake had failed.")
 
-wildcard_constraints:
-    sample="[^/]+",
-    prefix="[^/]+"
-
 
 rule add_read_group:
     input:
         bam=lambda wc: get_highest_cov_bam(wc,data_dir=data_dir)
     output:
-        bam=temp(f'{str(tmp_dir)}/{{sample}}/{{sample}}_RG.bam'),
+        bam=str(tmp_dir) + '/{sample}_RG.bam',
+        bai=str(tmp_dir) + '/{sample}_RG.bam.bai'
     threads: 1
     conda: f'{repo_root}/shared/envs/gatk.yaml'
-    log: f'{str(tmp_dir)}/{{sample}}/{{sample}}_create_recal_table.log'
+    log: str(tmp_dir) + '/{sample}_create_recal_table.log'
     shell:
         """
         set -euo pipefail
         
-        mkdir -p "$(dirname {output.bam})"
         gatk AddOrReplaceReadGroups \
           -I {input.bam} \
           -O {output.bam} \
-          -RGID {wildcards.sample} \
+          -RGID D1_1 \
           -RGLB lib1 \
           -RGPL ILLUMINA \
           -RGPU unit1 \
-          -RGSM {wildcards.sample}
+          -RGSM D1_1
+        
+        samtools index {output.bam}
         """
 
 
 rule create_recal_table:
     input:
         bam=rules.add_read_group.output.bam,
-        bai=f"{str(tmp_dir)}/{{sample}}/{{sample}}_RG.bam.bai",
+        bai=rules.add_read_group.output.bai,
         ref=reference,
         known_snps=known_snps,
         known_indels=known_indels
     output:
-        recal_table=f"{str(tmp_dir)}/{{sample}}/{{sample}}_recal_table.csv"
+        recal_table=str(tmp_dir) + '/{sample}_recal_table.csv'
     threads: 1
     conda:
         f'{repo_root}/shared/envs/gatk.yaml'
-    log: f"{str(tmp_dir)}/{{sample}}/{{sample}}_create_recal_table.log"
+    log: str(tmp_dir) + '/{sample}_create_recal_table.log'
     shell:
         """
         set -euo pipefail
@@ -96,19 +89,21 @@ rule create_recal_table:
           -O {output.recal_table}
         """
 
-
 rule apply_bqsr_index:
     input:
-        bam=rules.add_read_group.output.bam,
-        bai=f"{str(tmp_dir)}/{{sample}}/{{sample}}_RG.bam.bai",
+        bam=rules.create_recal_table.input.bam,
+        bai=rules.create_recal_table.input.bai,
         ref=reference,
         recal_table=rules.create_recal_table.output.recal_table
     output:
-        bam=temp(f"{str(tmp_dir)}/{{sample}}/{{sample}}_bqsr.bam"),
+        bam=str(tmp_dir) + '/{sample}_bqsr.bam',
+        bai=str(tmp_dir) + '/{sample}_bqsr.bam.bai'
     threads: 20
-    resources: heavy=1
-    conda: f'{repo_root}/shared/envs/gatk.yaml'
-    log: f"{str(tmp_dir)}/{{sample}}/apply_bqsr_index.log"
+    resources:
+        heavy=1
+    conda:
+        f'{repo_root}/shared/envs/gatk.yaml'
+    log: str(tmp_dir) + '/{sample}_apply_bqsr_index.log'
     shell:
         """
         set -euo pipefail
@@ -118,44 +113,59 @@ rule apply_bqsr_index:
             -R {input.ref} \
             --bqsr-recal-file {input.recal_table} \
             -O {output.bam}
+            
+        samtools index -@ {threads} -b {output.bam} {output.bai} 2>> {log}
         """
 
-
-rule add_indel_qual:
+rule indel_qual:
     input:
         bam=rules.apply_bqsr_index.output.bam,
-        bai = f"{str(tmp_dir)}/{{sample}}/{{sample}}_bqsr.bam.bai",
-        ref=reference
+        bai = rules.apply_bqsr_index.output.bai
     output:
-        bam=temp(f"{str(tmp_dir)}/{{sample}}/{{sample}}_bqsr_indelqual.bam"),
+        bam = str(tmp_dir) + '/{sample}_bqsr_indelqual.bam',
     threads: 20
-    resources: heavy=1
+    resources:
+        heavy=1
     conda: f'{repo_root}/shared/envs/lofreq.yaml'
-    log: f"{str(tmp_dir)}/{{sample}}/{{sample}}_indel_qual_index.log"
-    shell:
-        r"""
+    shell: r"""
         set -euo pipefail
-        
-        lofreq indelqual --dindel -f {input.ref} -o {output.bam} {input.bam}
-        """
+        lofreq indelqual --dindel -f {reference} -o {output.bam} {input.bam}
+    """
+
+
+rule index_indel_qual:
+    input:
+        bam=rules.indel_qual.output.bam,
+    output:
+        bai = str(tmp_dir) + '/{sample}_bqsr_indelqual.bam.bai'
+    threads: 20
+    resources:
+        heavy=1
+    conda: f'{repo_root}/shared/envs/lofreq.yaml'
+    shell: r"""
+        samtools index -@ {threads} -b {input.bam} {output.bai}
+    """
 
 
 rule call_variants:
     input:
-        bam=rules.add_indel_qual.output.bam,
-        bai=f"{str(tmp_dir)}/{{sample}}/{{sample}}_bqsr_indelqual.bam.bai",
+        bam=rules.indel_qual.output.bam,
+        bai=rules.index_indel_qual.output.bai,
         ref=reference
     output:
-        vcf=f"{str(tmp_dir)}/{{sample}}/{{sample}}.vcf"
+        vcf=str(tmp_dir) + "/{sample}_tmp.vcf"
     threads: 20
-    resources: heavy=1
+    resources:
+        heavy=1
     params:
         min_baseq=20,
         min_mapq=20,
         min_cov=12,
         min_qual=30
-    conda: f'{repo_root}/shared/envs/lofreq.yaml'
-    log: f"{str(tmp_dir)}/{{sample}}/{{sample}}_variant_calling.log"
+    conda:
+        f'{repo_root}/shared/envs/lofreq.yaml'
+    log:
+        str(results_dir) + '/{sample}_variant_calling.log'
     shell:
         r"""
         set -euo pipefail
@@ -177,58 +187,19 @@ rule compress_index:
     input:
         vcf=rules.call_variants.output.vcf
     output:
-        comp_vcf=f"{str(results_dir)}/{{sample}}/{{sample}}.vcf.gz",
-        tbi=f"{str(results_dir)}/{{sample}}/{{sample}}.vcf.gz.tbi"
+        comp_vcf=str(results_dir) + "/{sample}.vcf.gz",
+        tbi=str(results_dir) + "/{sample}.vcf.gz.tbi"
     threads: 20
-    resources: heavy=1
+    resources:
+        heavy=1
     conda:
         f'{repo_root}/shared/envs/htstools.yaml'
-    log: f"{str(results_dir)}/{{sample}}/{{sample}}_compress_index.log"
+    log:
+        str(results_dir) + '/{sample}_compress_index.log'
     shell:
         r"""
         set -euo pipefail
-        
-        mkdir -p "$(dirname {output.comp_vcf})"
+    
         bgzip -@ {threads} -f -c {input.vcf} > {output.comp_vcf}
         tabix -@ {threads} -f -p vcf {output.comp_vcf} 2>> {log}
-        """
-
-
-rule index_bam:
-    input:
-        bam=f"{str(tmp_dir)}/{{sample}}/{{prefix}}.bam"
-    output:
-        bai=f"{str(tmp_dir)}/{{sample}}/{{prefix}}.bam.bai"
-    params:
-        ref=reference
-    threads: 20
-    resources: heavy=1
-    conda:
-        f'{repo_root}/shared/envs/htstools.yaml'
-    log: f"{str(results_dir)}/{{sample}}/{{prefix}}_archive_bams.log"
-    shell:
-        r"""
-        samtools index -@ {threads} {input.bam} 2>> {log}
-        """
-
-
-rule archive_bams:
-    input:
-        bam=f"{str(tmp_dir)}/{{sample}}/{{sample}}_{{prefix}}.bam",
-        vcf=f"{str(results_dir)}/{{sample}}/{{sample}}.vcf.gz"
-    output:
-        cram=f"{str(results_dir)}/{{sample}}/{{sample}}_{{prefix}}.cram",
-        crai=f"{str(results_dir)}/{{sample}}/{{sample}}_{{prefix}}.cram.crai"
-    params:
-        ref=reference
-    threads: 20
-    resources: heavy=1
-
-    log: f"{str(results_dir)}/{{sample}}/{{prefix}}_archive_bams.log"
-    shell:
-        r"""
-        set -euo pipefail
-
-        samtools view -@ {threads} -C -T {params.ref} -o {output.cram} {input.bam} 2>> {log}
-        samtools index -@ {threads} -c {output.cram} 2>> {log}
         """
