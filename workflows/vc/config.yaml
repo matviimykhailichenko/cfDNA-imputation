@@ -5,4 +5,4 @@ tmp_dir: '/home/isilon/HumGenTempData/Matvii/tmp/'
 results_dir: '/home/isilon/HumGenTempData/Matvii/results/'
 cluster_base_dir: '/home/isilon/HumGenTempData/Matvii/'
 local_base_dir: '/media/matvii/30c92328-1f20-448d-a014-902558a05393/galushka/sandbox/'
-testing: False
+testing: True
