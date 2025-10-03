@@ -25,9 +25,7 @@ bam_prefixes = ["RG", "bqsr", "bqsr_indelqual"]
 rule all:
     input:
         expand(f"{results_dir}/{{sample}}/{{sample}}.vcf.gz", sample=SAMPLES.keys()),
-        expand(f"{results_dir}/{{sample}}/{{sample}}.vcf.gz.tbi", sample=SAMPLES.keys()),
-        expand(f"{results_dir}/{{sample}}/{{sample}}_{{prefix}}.cram", sample=SAMPLES.keys(), prefix=bam_prefixes),
-        expand(f"{results_dir}/{{sample}}/{{sample}}_{{prefix}}.cram.crai", sample=SAMPLES.keys(), prefix=bam_prefixes)
+        expand(f"{results_dir}/{{sample}}/{{sample}}.vcf.gz.tbi", sample=SAMPLES.keys())
 
 
 from scripts.custom.helpers import get_highest_cov_bam
@@ -127,7 +125,7 @@ rule add_indel_qual:
         bai = f"{str(tmp_dir)}/{{sample}}/{{sample}}_bqsr.bam.bai",
         ref=reference
     output:
-        bam=temp(f"{str(tmp_dir)}/{{sample}}/{{sample}}_bqsr_indelqual.bam"),
+        bam=f"{str(tmp_dir)}/{{sample}}/{{sample}}_bqsr_indelqual.bam"
     threads: 20
     resources: heavy=1
     conda: f'{repo_root}/shared/envs/lofreq.yaml'
@@ -209,26 +207,4 @@ rule index_bam:
     shell:
         r"""
         samtools index -@ {threads} {input.bam} 2>> {log}
-        """
-
-
-rule archive_bams:
-    input:
-        bam=f"{str(tmp_dir)}/{{sample}}/{{sample}}_{{prefix}}.bam",
-        vcf=f"{str(results_dir)}/{{sample}}/{{sample}}.vcf.gz"
-    output:
-        cram=f"{str(results_dir)}/{{sample}}/{{sample}}_{{prefix}}.cram",
-        crai=f"{str(results_dir)}/{{sample}}/{{sample}}_{{prefix}}.cram.crai"
-    params:
-        ref=reference
-    threads: 20
-    resources: heavy=1
-
-    log: f"{str(results_dir)}/{{sample}}/{{prefix}}_archive_bams.log"
-    shell:
-        r"""
-        set -euo pipefail
-
-        samtools view -@ {threads} -C -T {params.ref} -o {output.cram} {input.bam} 2>> {log}
-        samtools index -@ {threads} -c {output.cram} 2>> {log}
         """
